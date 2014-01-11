@@ -40,7 +40,7 @@ mettreEnFormePredicatsDispo(ListeEntree, ListeEntree):-row(ID, DATE, HEURE, SALL
 
 obtenirListeBinome(ListeEntree, ListeResultat):-row(ID, _),
 	\+ member(ID, ListeEntree),
-	obtenirListeBinome([ID|ListeEntree], ListeResultat),!.
+	obtenirListeBinome([ID|ListeEntree], ListeResultat).
 
 obtenirListeBinome(ListeEntree, ListeEntree):-row(ID, _),
 	member(ID, ListeEntree).

@@ -17,7 +17,11 @@ algorithme(ListeDisponibilites, ListeBinomes, ListeAttribution, ListeResultat):-
 	choisirDisponibiliteNd(ListeDisponibilites, ID, DATE, HEURE, SALLE),
 	delete(ListeDisponibilites,[ID, DATE, HEURE, SALLE], ListeDisponibilites2),
 	delete(ListeBinomes,ID, ListeBinomes2),
+	print('Liste Dispo avant : '),
+	print(ListeDisponibilites2),
 	supprimerDisponibilitesBinomesConcurrents(ID, ListeDisponibilites2, DATE, HEURE, ListeDisponibilitesResultat),
+	print('\n Liste disponibilités après : '),
+	print(ListeDisponibilitesResultat),
 	algorithme(ListeDisponibilitesResultat, ListeBinomes2, [[ID, DATE, HEURE, SALLE]|ListeAttribution], ListeResultat).
 
 algorithme(_, [], ListeAttribution, ListeAttribution).
@@ -27,6 +31,9 @@ algorithme(_, [], ListeAttribution, ListeAttribution).
 % -> Cherche les binomes concurrents
 % -> Supprime les disponibilités du binome concurrent
 supprimerDisponibilitesBinomesConcurrents(ID, ListeDisponibilites, DATE, HEURE, ListeDisponibilitesResultat):-trouverLesBinomesConcurrents(ID, ListeConcurrents),
+	%	print('Liste concurrents : '),
+		%print(ListeConcurrents),
+%		print('\n'),
 	supprimerDisponibilitesBinomes(ListeConcurrents, ListeDisponibilites, DATE, HEURE, ListeDisponibilitesResultat).
 
 
@@ -55,6 +62,10 @@ trouverLesBinomesConcurrents(ID, R):- trouverTousLesAutresBinomes(ID, ListeEnsei
 chercherConcurrents(ListeEnseignantsBinome, ListeEnseignantsAutresBinomes, ListeEntree, ListeResultat):- member(AutresEnseignants, ListeEnseignantsAutresBinomes),
 	delete(ListeEnseignantsAutresBinomes, AutresEnseignants, L2),
 	incompatibilite(AutresEnseignants, ListeEnseignantsBinome),
+%	print('Incompatibilite! Liste des autres enseignants :  '),
+%	print(AutresEnseignants),
+%	print('      -     Liste des Enseignants du binome :    '),
+%	print(ListeEnseignantsBinome),
 	chercherConcurrents(ListeEnseignantsBinome, L2, [AutresEnseignants|ListeEntree], ListeResultat).
 
 chercherConcurrents(ListeEnseignantsBinome, ListeEnseignantsAutresBinomes,ListeEntree, ListeResultat):- member(AutresEnseignants, ListeEnseignantsAutresBinomes),
