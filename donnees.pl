@@ -1,28 +1,15 @@
-binome(2,[gjb,jpg]).
-binome(5,[jm,pl]).
-binome(7,[jpg,pl]).
-
 incompatibilite(L1, L2):- \+ intersection(L1,L2,[]).
 
 seance(2,2013-12-04, 9, 4).
 
-lireFichierJurys(FICHIER, R):-csv_read_file(FICHIER, R),
-	creerPredicatsJurys(R).
+lireFichier(FICHIER):-csv_read_file(FICHIER, R),
+	creerPredicats(R).
 
-lireFichierBinomes(FICHIER, R):- csv_read_file(FICHIER, R),
-	creerPredicatsBinomes(R).
-
-creerPredicatsJurys([X|Y]):-[X|Y]\= [],
+creerPredicats([X|Y]):-[X|Y]\= [],
 	asserta(X),
-	creerPredicatsJurys(Y).
+	creerPredicats(Y).
 
-creerPredicatsJurys([]).
-
-creerPredicatsBinomes([X|Y]):- [X|Y]\= [],
-	asserta(X),
-	creerPredicatsBinomes(Y).
-
-creerPredicatsBinomes([]).
+creerPredicats([]).
 
 lancerMiseEnFormeBinomes([ID|R]):-row(ID, _),
 	mettreEnFormePredicatsBinomes([], R, ID).
@@ -57,4 +44,3 @@ obtenirListeBinome(ListeEntree, ListeResultat):-row(ID, _),
 
 obtenirListeBinome(ListeEntree, ListeEntree):-row(ID, _),
 	member(ID, ListeEntree).
-
