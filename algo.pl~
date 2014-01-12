@@ -1,9 +1,11 @@
-choisirBinomeNd(ListeBinomes, ID):- random_member(ID, ListeBinomes).
+choisirBinomeNd(ListeBinomes, [ID|X]):- random_member([ID|X], ListeBinomes).
 
 choisirDisponibiliteNd(ListeDisponibilites, ID, DATE, HEURE, SALLE):- member([ID, DATE, HEURE, SALLE], ListeDisponibilites).
 
-lancerAlgorithme(R):- lireFichier('./solveur_jurys_test.tsv'),
-	lireFichier('./solveur_disponibilites_test.tsv'),
+preparerAlgorithme(_):-lireFichier('./solveur_jurys.tsv'),
+	lireFichier('./solveur_disponibilites.tsv').
+
+lancerAlgorithme(R):-
 	lancerMiseEnFormePredicatsDispo(ListeDisponibilites),
 	obtenirListeBinome([],ListeBinomes),
 	algorithme(ListeDisponibilites, ListeBinomes,[], R),!.
@@ -13,15 +15,11 @@ verifierDisponibiliteCreneau(DATE, HEURE, SALLE, ListeDisponibilites):-member([_
 verifierDisponibiliteBinome(ID, ListeBinomes):-member(ID, ListeBinomes).
 
 algorithme(ListeDisponibilites, ListeBinomes, ListeAttribution, ListeResultat):- ListeBinomes \= [],
-	choisirBinomeNd(ListeBinomes, ID),
+	choisirBinomeNd(ListeBinomes, [ID|Enseignants]),
 	choisirDisponibiliteNd(ListeDisponibilites, ID, DATE, HEURE, SALLE),
 	delete(ListeDisponibilites,[ID, DATE, HEURE, SALLE], ListeDisponibilites2),
-	delete(ListeBinomes,ID, ListeBinomes2),
-	print('Liste Dispo avant : '),
-	print(ListeDisponibilites2),
-	supprimerDisponibilitesBinomesConcurrents(ID, ListeDisponibilites2, DATE, HEURE, ListeDisponibilitesResultat),
-	print('\n Liste disponibilités après : '),
-	print(ListeDisponibilitesResultat),
+	delete(ListeBinomes,[ID|_], ListeBinomes2),
+	supprimerDisponibilitesBinomesConcurrents([ID|Enseignants], ListeBinomes2, ListeDisponibilites2, DATE, HEURE, ListeDisponibilitesResultat),
 	algorithme(ListeDisponibilitesResultat, ListeBinomes2, [[ID, DATE, HEURE, SALLE]|ListeAttribution], ListeResultat).
 
 algorithme(_, [], ListeAttribution, ListeAttribution).
@@ -30,70 +28,14 @@ algorithme(_, [], ListeAttribution, ListeAttribution).
 % pas qu'un binôme concurrent prenne un créneau à la même heure)
 % -> Cherche les binomes concurrents
 % -> Supprime les disponibilités du binome concurrent
-supprimerDisponibilitesBinomesConcurrents(ID, ListeDisponibilites, DATE, HEURE, ListeDisponibilitesResultat):-trouverLesBinomesConcurrents(ID, ListeConcurrents),
-	%	print('Liste concurrents : '),
-		%print(ListeConcurrents),
-%		print('\n'),
+supprimerDisponibilitesBinomesConcurrents([ID|Enseignants], ListeBinomes, ListeDisponibilites, DATE, HEURE, ListeDisponibilitesResultat):- obtenirBinomesConcurrents([ID|Enseignants], ListeBinomes, [], ListeConcurrents),
 	supprimerDisponibilitesBinomes(ListeConcurrents, ListeDisponibilites, DATE, HEURE, ListeDisponibilitesResultat).
 
 
-supprimerDisponibilitesBinomes(ListeBinomes, ListeDisponibilites, DATE, HEURE, ListeDisponibilitesResultat):-member([X|Y], ListeBinomes),
+supprimerDisponibilitesBinomes(ListeBinomes, ListeDisponibilites, DATE, HEURE, ListeDisponibilitesResultat):-member(X, ListeBinomes),
 	delete(ListeDisponibilites, [X, DATE, HEURE, _], ListeDisponibilites2),
-	delete(ListeBinomes, [X|Y], ListeBinomes2),
+	delete(ListeBinomes, X, ListeBinomes2),
 	supprimerDisponibilitesBinomes(ListeBinomes2, ListeDisponibilites2, DATE, HEURE, ListeDisponibilitesResultat).
 
 supprimerDisponibilitesBinomes([], ListeDisponibilites, _, _, ListeDisponibilites).
 
-% Cherche les binomes concurrents à un binome donné
-% -> Cherche tous les autres binômes avec leurs enseignants attitrés
-% -> Cherche les enseignants du binôme courant
-% -> On cherche les binômes qui ont des profs en commun avec le binome
-% donné.
-trouverLesBinomesConcurrents(ID, R):- trouverTousLesAutresBinomes(ID, ListeEnseignantsAutresBinomes),
-	findall(Enseignant, row(ID, Enseignant), ListeEnseignantsBinome),
-	chercherConcurrents([ID|ListeEnseignantsBinome], ListeEnseignantsAutresBinomes, [], R).
-
-% Cherche les profs en commun entre deux binômes
-% Sélectionne une liste de profs pour un binôme
-% Supprime la liste de ces enseignants de la liste principale
-% Fait l'intersection entre la liste des enseignants du binome et la
-% liste extraite plus haut. Si incompatibilité,	on continue à cherche
-% les concurrents
-chercherConcurrents(ListeEnseignantsBinome, ListeEnseignantsAutresBinomes, ListeEntree, ListeResultat):- member(AutresEnseignants, ListeEnseignantsAutresBinomes),
-	delete(ListeEnseignantsAutresBinomes, AutresEnseignants, L2),
-	incompatibilite(AutresEnseignants, ListeEnseignantsBinome),
-%	print('Incompatibilite! Liste des autres enseignants :  '),
-%	print(AutresEnseignants),
-%	print('      -     Liste des Enseignants du binome :    '),
-%	print(ListeEnseignantsBinome),
-	chercherConcurrents(ListeEnseignantsBinome, L2, [AutresEnseignants|ListeEntree], ListeResultat).
-
-chercherConcurrents(ListeEnseignantsBinome, ListeEnseignantsAutresBinomes,ListeEntree, ListeResultat):- member(AutresEnseignants, ListeEnseignantsAutresBinomes),
-	delete(ListeEnseignantsAutresBinomes, AutresEnseignants, L2),
-	\+ incompatibilite(ListeEnseignantsBinome, ListeEnseignantsAutresBinomes),
-	chercherConcurrents(ListeEnseignantsBinome, L2, ListeEntree, ListeResultat).
-
-chercherConcurrents(_, [], ListeEntree, ListeEntree).
-
-% Cherche la liste des binomes, supprime de la liste des binomes l'id
-% qui correspond à l'id passé en paramètre puis cherche les enseignants
-% des binômes dans la nouvelle liste
-trouverTousLesAutresBinomes(ID, ListeEnseignants):-obtenirListeBinome([], ListeBinomes),
-	delete(ListeBinomes, ID, ListeBinomes2),
-	trouverLesEnseignantsDesBinomes(ListeBinomes2, [], ListeEnseignants).
-
-% Cherche les enseignants des binômes
-% Retourne une liste des binomes avec leurs enseignants
-% Sélectionne un ID de binôme parmi les binomes de la liste
-% Cherche tous les enseignants du binôme sélectionné
-% Supprime de la liste des binômes le binôme sélectionné
-% Lancement de la récursivité sur tous les autres binômes restants et
-% concaténation de la liste des enseignants du binôme à la liste
-% d'entree
-trouverLesEnseignantsDesBinomes(ListeBinomes, ListeEntree, ListeResultat):-
-	member(X, ListeBinomes),
-	findall(Enseignant, row(X, Enseignant),L),
-	delete(ListeBinomes, X, ListeBinomes2),
-	trouverLesEnseignantsDesBinomes(ListeBinomes2, [[X|L]|ListeEntree], ListeResultat).
-
-trouverLesEnseignantsDesBinomes([], ListeEntree, ListeEntree).

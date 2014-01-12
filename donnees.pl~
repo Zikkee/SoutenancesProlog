@@ -11,22 +11,6 @@ creerPredicats([X|Y]):-[X|Y]\= [],
 
 creerPredicats([]).
 
-lancerMiseEnFormeBinomes([ID|R]):-row(ID, _),
-	mettreEnFormePredicatsBinomes([], R, ID).
-
-mettreEnFormePredicatsBinomes(L, R, ID):- row(ID, NOM),
-	\+ member(NOM, L),
-	L1 = [NOM|L],
-	!,
-	mettreEnFormePredicatsBinomes(L1, R, ID),
-	!.
-
-mettreEnFormePredicatsBinomes([X|Y], [X|Y], ID):- \+ row(ID, _).
-
-mettreEnFormePredicatsBinomes(L, L, ID):- row(ID, NOM),
-	!,
-	member(NOM,L).
-
 lancerMiseEnFormePredicatsDispo(ListeResultat):-mettreEnFormePredicatsDispo([], ListeResultat),
 	!.
 
@@ -39,8 +23,35 @@ mettreEnFormePredicatsDispo(ListeEntree, ListeEntree):-row(ID, DATE, HEURE, SALL
 	member([ID, DATE, HEURE, SALLE], ListeEntree).
 
 obtenirListeBinome(ListeEntree, ListeResultat):-row(ID, _),
-	\+ member(ID, ListeEntree),
-	obtenirListeBinome([ID|ListeEntree], ListeResultat).
+	\+ member([ID|_], ListeEntree),
+	findall(Enseignant, row(ID, Enseignant), ListeEnseignants),
+	obtenirListeBinome([[ID|ListeEnseignants]|ListeEntree], ListeResultat),!.
 
 obtenirListeBinome(ListeEntree, ListeEntree):-row(ID, _),
-	member(ID, ListeEntree).
+	member([ID|_], ListeEntree).
+
+obtenirBinomesConcurrents([ID|X], [[A|_]|Y], ListeEntree, ListeSortie):-ID == A,
+	print('Binome '),
+	print(A),
+	print(' est le même !'),
+	print('\n'),
+	obtenirBinomesConcurrents([ID|X], Y, ListeEntree, ListeSortie).
+
+obtenirBinomesConcurrents([ID|X], [[A|B]|Y], ListeEntree, ListeSortie):-ID \= A,
+	incompatibilite([A|B], [ID|X]),
+	print('Binome '),
+	print(A),
+	print(' n\'est pas le meme et n\'est pas compatible'),
+	print('\n'),
+	obtenirBinomesConcurrents([ID|X], Y, [A|ListeEntree], ListeSortie).
+
+
+obtenirBinomesConcurrents([ID|X], [[A|B]|Y], ListeEntree, ListeSortie):-ID \= A,
+	\+ incompatibilite([A|B], [ID|X]),
+	print('Binome '),
+	print(A),
+	print(' n\'est pas le meme et est compatible'),
+	print('\n'),
+	obtenirBinomesConcurrents([ID|X], Y, ListeEntree, ListeSortie).
+
+obtenirBinomesConcurrents(_, [], ListeEntree, ListeEntree).
