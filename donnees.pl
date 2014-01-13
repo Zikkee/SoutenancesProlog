@@ -25,10 +25,14 @@ mettreEnFormePredicatsDispo(ListeEntree, ListeEntree):-row(ID, DATE, HEURE, SALL
 obtenirListeBinome(ListeEntree, ListeResultat):-row(ID, _),
 	\+ member([ID|_], ListeEntree),
 	findall(Enseignant, row(ID, Enseignant), ListeEnseignants),
-	obtenirListeBinome([[ID|ListeEnseignants]|ListeEntree], ListeResultat),!.
+	obtenirCompteDisponibilitesBinome(ID, NombreDisponibilites),
+	obtenirListeBinome([[ID,NombreDisponibilites|ListeEnseignants]|ListeEntree], ListeResultat),!.
 
 obtenirListeBinome(ListeEntree, ListeEntree):-row(ID, _),
 	member([ID|_], ListeEntree).
+
+obtenirCompteDisponibilitesBinome(ID, NombreDisponibilites):-findall(ID, row(ID, _, _, _), ListeDisponibilites),
+	length(ListeDisponibilites, NombreDisponibilites).
 
 obtenirBinomesConcurrents([ID|X], [[A|_]|Y], ListeEntree, ListeSortie):-ID == A,
 	obtenirBinomesConcurrents([ID|X], Y, ListeEntree, ListeSortie).
