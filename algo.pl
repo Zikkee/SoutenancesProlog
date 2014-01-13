@@ -50,7 +50,7 @@ algorithme(ListeDisponibilites, ListeBinomes, ListeAttribution, ListeResultat):-
 	choisirDisponibiliteNd(ListeDisponibilites, ID, DATE, HEURE, SALLE),
 	delete(ListeDisponibilites,[ID, DATE, HEURE, SALLE], ListeDisponibilites2),
 	delete(ListeBinomes,[ID|_], ListeBinomes2),
-	supprimerDisponibilitesBinomesConcurrents([ID|Enseignants], ListeBinomes2, ListeDisponibilites2, DATE, HEURE, ListeDisponibilites3, ListeBinomes3),
+	supprimerDisponibilitesBinomesConcurrents([ID|Enseignants], ListeBinomes2, ListeDisponibilites2, DATE, HEURE, SALLE, ListeDisponibilites3, ListeBinomes3),
 	verifierExistenceDisponibilites(ListeBinomes3, ListeDisponibilites3),
 	algorithme(ListeDisponibilites3, ListeBinomes3, [[ID, DATE, HEURE, SALLE]|ListeAttribution], ListeResultat).
 
@@ -60,10 +60,10 @@ algorithme(_, [], ListeAttribution, ListeAttribution).
 % pas qu'un binôme concurrent prenne un créneau à la même heure)
 % -> Cherche les binomes concurrents
 % -> Supprime les disponibilités du binome concurrent
-supprimerDisponibilitesBinomesConcurrents([ID|Enseignants], ListeBinomes, ListeDisponibilites, DATE, HEURE, ListeDisponibilitesResultat, ListeBinomesResultat):- supprimerDisponibilitesBinomes([ID|Enseignants], ListeBinomes, ListeDisponibilites, DATE, HEURE, ListeDisponibilitesResultat, ListeBinomesResultat).
+supprimerDisponibilitesBinomesConcurrents([ID|Enseignants], ListeBinomes, ListeDisponibilites, DATE, HEURE, SALLE, ListeDisponibilitesResultat, ListeBinomesResultat):- supprimerDisponibilitesBinomes([ID|Enseignants], ListeBinomes, ListeDisponibilites, DATE, HEURE, SALLE, ListeDisponibilitesResultat, ListeBinomesResultat).
 
 
-supprimerDisponibilitesBinomes(Binome, [[ID, NombreDisponibilites|Enseignants]|Z], ListeDisponibilites, DATE, HEURE, ListeDisponibilitesResultat, [[ID,NombreDisponibilites2|Enseignants]|ListeBinomeResultat]):-incompatibilite(Binome, [ID|Enseignants]),
+supprimerDisponibilitesBinomes(Binome, [[ID, NombreDisponibilites|Enseignants]|Z], ListeDisponibilites, DATE, HEURE, SALLE, ListeDisponibilitesResultat, [[ID,NombreDisponibilites2|Enseignants]|ListeBinomeResultat]):-incompatibilite(Binome, [ID|Enseignants]),
 	length(ListeDisponibilites, TailleAvant),
 	delete(ListeDisponibilites, [ID, DATE, HEURE, _], ListeDisponibilites2),
 	length(ListeDisponibilites2, TailleApres),
@@ -71,9 +71,9 @@ supprimerDisponibilitesBinomes(Binome, [[ID, NombreDisponibilites|Enseignants]|Z
 	NombreSuppression > 0,
 	NombreDisponibilites2 is NombreDisponibilites - NombreSuppression,
 	NombreDisponibilites2 >= 0,
-	supprimerDisponibilitesBinomes(Binome, Z, ListeDisponibilites2, DATE, HEURE, ListeDisponibilitesResultat, ListeBinomeResultat).
+	supprimerDisponibilitesBinomes(Binome, Z, ListeDisponibilites2, DATE, HEURE, SALLE, ListeDisponibilitesResultat, ListeBinomeResultat).
 
-supprimerDisponibilitesBinomes(Binome, [[ID, NombreDisponibilites|Enseignants]|Z], ListeDisponibilites, DATE, HEURE, ListeDisponibilitesResultat, [[ID,0|Enseignants]|ListeBinomeResultat]):-incompatibilite(Binome, [ID|Enseignants]),
+supprimerDisponibilitesBinomes(Binome, [[ID, NombreDisponibilites|Enseignants]|Z], ListeDisponibilites, DATE, HEURE, SALLE, ListeDisponibilitesResultat, [[ID,0|Enseignants]|ListeBinomeResultat]):-incompatibilite(Binome, [ID|Enseignants]),
 	length(ListeDisponibilites, TailleAvant),
 	delete(ListeDisponibilites, [ID, DATE, HEURE, _], ListeDisponibilites2),
 	length(ListeDisponibilites2, TailleApres),
@@ -81,20 +81,46 @@ supprimerDisponibilitesBinomes(Binome, [[ID, NombreDisponibilites|Enseignants]|Z
 	NombreSuppression > 0,
 	NombreDisponibilites2 is NombreDisponibilites - NombreSuppression,
 	NombreDisponibilites2 < 0,
-	supprimerDisponibilitesBinomes(Binome, Z, ListeDisponibilites2, DATE, HEURE, ListeDisponibilitesResultat, ListeBinomeResultat).
+	supprimerDisponibilitesBinomes(Binome, Z, ListeDisponibilites2, DATE, HEURE, SALLE, ListeDisponibilitesResultat, ListeBinomeResultat).
 
-supprimerDisponibilitesBinomes(Binome, [[ID, NombreDisponibilites|Enseignants]|Z], ListeDisponibilites, DATE, HEURE, ListeDisponibilitesResultat, [[ID,NombreDisponibilites|Enseignants]|ListeBinomeResultat]):-incompatibilite(Binome, [ID|Enseignants]),
+supprimerDisponibilitesBinomes(Binome, [[ID, NombreDisponibilites|Enseignants]|Z], ListeDisponibilites, DATE, HEURE, SALLE, ListeDisponibilitesResultat, [[ID,NombreDisponibilites|Enseignants]|ListeBinomeResultat]):-incompatibilite(Binome, [ID|Enseignants]),
 	length(ListeDisponibilites, TailleAvant),
 	delete(ListeDisponibilites, [ID, DATE, HEURE, _], ListeDisponibilites2),
 	length(ListeDisponibilites2, TailleApres),
 	NombreSuppression is TailleAvant - TailleApres,
 	NombreSuppression =< 0,
-	supprimerDisponibilitesBinomes(Binome, Z, ListeDisponibilites2, DATE, HEURE, ListeDisponibilitesResultat, ListeBinomeResultat).
+	supprimerDisponibilitesBinomes(Binome, Z, ListeDisponibilites2, DATE, HEURE, SALLE, ListeDisponibilitesResultat, ListeBinomeResultat).
 
-supprimerDisponibilitesBinomes(Binome, [[ID, NombreDisponibilites|Enseignants]|Z], ListeDisponibilites, DATE, HEURE, ListeDisponibilitesResultat, [[ID,NombreDisponibilites|Enseignants]|ListeBinomeResultat]):- \+ incompatibilite(Binome, [ID|Enseignants]),
-	supprimerDisponibilitesBinomes(Binome, Z, ListeDisponibilites, DATE, HEURE, ListeDisponibilitesResultat, ListeBinomeResultat).
+supprimerDisponibilitesBinomes(Binome, [[ID, NombreDisponibilites|Enseignants]|Z], ListeDisponibilites, DATE, HEURE, SALLE, ListeDisponibilitesResultat, [[ID,NombreDisponibilites|Enseignants]|ListeBinomeResultat]):- \+ incompatibilite(Binome, [ID|Enseignants]),
+	length(ListeDisponibilites, TailleAvant),
+	delete(ListeDisponibilites, [ID, DATE, HEURE, SALLE], ListeDisponibilites2),
+	length(ListeDisponibilites2, TailleApres),
+	NombreSuppression is TailleAvant - TailleApres,
+	NombreSuppression =< 0,
+	supprimerDisponibilitesBinomes(Binome, Z, ListeDisponibilites, DATE, HEURE, SALLE, ListeDisponibilitesResultat, ListeBinomeResultat).
 
-supprimerDisponibilitesBinomes(_, [], ListeDisponibilites, _, _, ListeDisponibilites, []).
+supprimerDisponibilitesBinomes(Binome, [[ID, NombreDisponibilites|Enseignants]|Z], ListeDisponibilites, DATE, HEURE, SALLE, ListeDisponibilitesResultat, [[ID,NombreDisponibilites2|Enseignants]|ListeBinomeResultat]):- \+ incompatibilite(Binome, [ID|Enseignants]),
+	length(ListeDisponibilites, TailleAvant),
+	delete(ListeDisponibilites, [ID, DATE, HEURE, SALLE], ListeDisponibilites2),
+	length(ListeDisponibilites2, TailleApres),
+	NombreSuppression is TailleAvant - TailleApres,
+	NombreSuppression > 0,
+	NombreDisponibilites2 is NombreDisponibilites - NombreSuppression,
+	NombreDisponibilites2 >= 0,
+	supprimerDisponibilitesBinomes(Binome, Z, ListeDisponibilites2, DATE, HEURE, SALLE, ListeDisponibilitesResultat, ListeBinomeResultat).
+
+supprimerDisponibilitesBinomes(Binome, [[ID, NombreDisponibilites|Enseignants]|Z], ListeDisponibilites, DATE, HEURE, SALLE, ListeDisponibilitesResultat, [[ID,0|Enseignants]|ListeBinomeResultat]):- \+ incompatibilite(Binome, [ID|Enseignants]),
+	length(ListeDisponibilites, TailleAvant),
+	delete(ListeDisponibilites, [ID, DATE, HEURE, SALLE], ListeDisponibilites2),
+	length(ListeDisponibilites2, TailleApres),
+	NombreSuppression is TailleAvant - TailleApres,
+	NombreSuppression > 0,
+	NombreDisponibilites2 is NombreDisponibilites - NombreSuppression,
+	NombreDisponibilites2 < 0,
+	supprimerDisponibilitesBinomes(Binome, Z, ListeDisponibilites2, DATE, HEURE, SALLE, ListeDisponibilitesResultat, ListeBinomeResultat).
+
+
+supprimerDisponibilitesBinomes(_, [], ListeDisponibilites, _, _, _,ListeDisponibilites, []).
 
 verifierExistenceDisponibilites([[X|_]|Y], ListeDisponibilites):- member([X|_], ListeDisponibilites),
 	!, % Evite a member de renvoyer faux si on lui repose la question
